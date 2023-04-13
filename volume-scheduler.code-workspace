@@ -1,0 +1,44 @@
+{
+  "folders": [
+    {
+      "path": "app"
+    },
+    {
+      "path": "ui"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      ".parcel-cache": true,
+      "**/.DS_Store": true,
+      "**/.git": true,
+      "**/.hg": true,
+      "**/.svn": true,
+      "**/CVS": true,
+      "**/node_modules": true,
+      "**/target": true,
+      "**/Thumbs.db": true,
+      "dist": true
+    },
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+      "bigfood",
+      "codepaths",
+      "fullscreen",
+      "icns",
+      "serde",
+      "tauri",
+      "tsbuildinfo"
+    ],
+    "files.eol": "\n"
+  },
+  "extensions": {
+    "recommendations": [
+      "streetsidesoftware.code-spell-checker",
+      "editorconfig.editorconfig",
+      "esbenp.prettier-vscode",
+      "rust-lang.rust-analyzer",
+      "tauri-apps.tauri-vscode"
+    ]
+  }
+}
