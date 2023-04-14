@@ -5,6 +5,12 @@
     },
     {
       "path": "ui"
+    },
+    {
+      "path": "types"
+    },
+    {
+      "path": "type-macro"
     }
   ],
   "settings": {
