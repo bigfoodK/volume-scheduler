@@ -2862,6 +2862,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
+ "windows-volume-control",
 ]
 
 [[package]]
@@ -3104,6 +3105,15 @@ name = "windows-tokens"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f838de2fe15fe6bac988e74b798f26499a8b21a9d97edec321e79b28d1d7f597"
+
+[[package]]
+name = "windows-volume-control"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd909ebb609293f8ebf138ff4a120f7683f285a9b7369d8b5d4ff1bc32d5b28f"
+dependencies = [
+ "windows 0.44.0",
+]
 
 [[package]]
 name = "windows_aarch64_gnullvm"
