@@ -7,6 +7,7 @@ export const ButtonBase = styled.button`
   border: 0px;
   text-align: center;
   justify-content: center;
+  align-items: center;
   padding: 0.375rem 0.75rem;
   border-radius: ${({ theme }) => theme.radius};
   gap: 0.25rem;
