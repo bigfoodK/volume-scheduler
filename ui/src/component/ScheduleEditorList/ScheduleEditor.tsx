@@ -22,7 +22,7 @@ export default function ScheduleEditor(props: Props) {
       <DeleteButton onClick={() => deleteSchedule(id)}>
         <FaTrashAlt />
       </DeleteButton>
-      <Graph />
+      <Graph scheduleId={id} />
     </Container>
   );
 }
