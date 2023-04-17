@@ -1,26 +1,25 @@
 import React from "react";
-import { useRecoilState } from "recoil";
 import styled from "styled-components";
-import { ScheduleState } from "~src/state/ScheduleState";
 import { SecondaryButton } from "../common/button/SecondaryButton";
 import { PrimaryButton } from "../common/button/PrimaryButton";
 import Graph from "./Graph";
 import { FaPlay, FaTrashAlt } from "react-icons/fa";
+import useScheduleAction from "~src/action/useScheduleAction";
 
 type Props = {
   id: string;
 };
 
 export default function ScheduleEditor(props: Props) {
-  const [schedule, setSchedule] = useRecoilState(
-    ScheduleState.schedule(props.id)
-  );
+  const { id } = props;
+  const { deleteSchedule } = useScheduleAction();
+
   return (
     <Container>
       <StartButton>
         <FaPlay />
       </StartButton>
-      <DeleteButton>
+      <DeleteButton onClick={() => deleteSchedule(id)}>
         <FaTrashAlt />
       </DeleteButton>
       <Graph />

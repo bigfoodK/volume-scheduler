@@ -20,5 +20,16 @@ export default function useScheduleAction() {
     []
   );
 
-  return { startSchedule, createNewSchedule };
+  const deleteSchedule = useRecoilCallback(
+    ({ set, reset }) =>
+      (targetId: string) => {
+        set(ScheduleState.scheduleIds, (previous) =>
+          previous.filter((id) => id !== targetId)
+        );
+        reset(ScheduleState.schedule(targetId));
+      },
+    []
+  );
+
+  return { startSchedule, createNewSchedule, deleteSchedule };
 }
