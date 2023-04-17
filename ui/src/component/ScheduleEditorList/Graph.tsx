@@ -97,7 +97,9 @@ export default function Graph(props: Props) {
             volume: 1 - event.nativeEvent.offsetY / canvasRef.current.height,
           };
           setSchedule((prev) => {
-            const volumePoints = [...prev.volumePoints, newVolumePoint];
+            const volumePoints = [...prev.volumePoints, newVolumePoint].sort(
+              (a, b) => a.offsetSecond - b.offsetSecond
+            );
             return {
               id: prev.id,
               volumePoints,
