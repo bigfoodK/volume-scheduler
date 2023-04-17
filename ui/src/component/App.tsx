@@ -1,24 +1,21 @@
 import React from "react";
-import useScheduleAction from "~src/action/useScheduleAction";
+import styled, { ThemeProvider } from "styled-components";
+import { GlobalStyle, theme } from "~src/constance/theme";
+import ScheduleEditorList from "./ScheduleEditorList/ScheduleEditorList";
 
 export default function App() {
-  const { startSchedule } = useScheduleAction();
   return (
-    <>
-      <button
-        onClick={() => {
-          startSchedule({
-            volumePoints: [
-              {
-                offsetSecond: 0,
-                volume: 0.5,
-              },
-            ],
-          });
-        }}
-      >
-        test
-      </button>
-    </>
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <Container>
+        <ScheduleEditorList />
+      </Container>
+    </ThemeProvider>
   );
 }
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
