@@ -25,6 +25,7 @@ impl Schedule {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct VolumePoint {
+    id: String,
     offset_second: f32,
     volume: f32,
 }
