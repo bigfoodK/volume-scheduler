@@ -5,6 +5,8 @@ import { PrimaryButton } from "../common/button/PrimaryButton";
 import Graph from "./Graph";
 import { FaPlay, FaTrashAlt } from "react-icons/fa";
 import useScheduleAction from "~src/action/useScheduleAction";
+import { useRecoilValue } from "recoil";
+import { ScheduleState } from "~src/state/ScheduleState";
 
 type Props = {
   id: string;
@@ -12,11 +14,12 @@ type Props = {
 
 export default function ScheduleEditor(props: Props) {
   const { id } = props;
-  const { deleteSchedule } = useScheduleAction();
+  const schedule = useRecoilValue(ScheduleState.schedule(id));
+  const { startSchedule, deleteSchedule } = useScheduleAction();
 
   return (
     <Container>
-      <StartButton>
+      <StartButton onClick={() => startSchedule(schedule)}>
         <FaPlay />
       </StartButton>
       <DeleteButton onClick={() => deleteSchedule(id)}>
