@@ -1,9 +1,11 @@
 use crate::volume::set_volume;
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
+use ts_rs::TS;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct Schedule {
     volume_points: Vec<VolumePoint>,
 }
@@ -18,8 +20,9 @@ impl Schedule {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct VolumePoint {
     offset_second: f32,
     volume: f32,
