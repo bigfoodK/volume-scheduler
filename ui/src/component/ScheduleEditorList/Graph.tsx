@@ -177,13 +177,19 @@ export default function Graph(props: Props) {
       }}
       onWheel={(event) => {
         if (event.ctrlKey) {
-          setPxPerSecond((prev) => {
-            const next = Math.max(
-              0.005,
-              Math.min(0.1, Math.exp(Math.log(prev) - event.deltaY / 1000))
-            );
-            return next;
-          });
+          const nextPxPerSecond = Math.max(
+            0.005,
+            Math.min(0.1, Math.exp(Math.log(pxPerSecond) - event.deltaY / 1000))
+          );
+          const nextOffsetSecond = Math.max(
+            0,
+            offsetSecond +
+              (event.nativeEvent.offsetX / pxPerSecond -
+                event.nativeEvent.offsetX / nextPxPerSecond)
+          );
+
+          setPxPerSecond(nextPxPerSecond);
+          setOffsetSecond(nextOffsetSecond);
         }
         if (event.shiftKey) {
           setOffsetSecond((prev) =>
