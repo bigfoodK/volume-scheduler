@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRecoilState } from "recoil";
 import styled, { DefaultTheme, useTheme } from "styled-components";
 import { Schedule } from "~../app/bindings/Schedule";
+import { VolumePoint } from "~../app/bindings/VolumePoint";
 import useResizeEffect from "~src/helper/useResizeEffect";
 import { ScheduleState } from "~src/state/ScheduleState";
 
@@ -24,8 +25,8 @@ export default function Graph(props: Props) {
     ScheduleState.schedule(scheduleId)
   );
   const theme = useTheme();
-  const [mouseHoveringPointId, setMouseHoveringPointId] = useState<
-    string | undefined
+  const [mouseHoveringPoint, setMouseHoveringPoint] = useState<
+    VolumePoint | undefined
   >();
 
   useResizeEffect(canvasRef, (entry, target) => {
@@ -49,6 +50,15 @@ export default function Graph(props: Props) {
       drawGrid(context, pxPerSecond, offsetSecond, theme);
       drawLine(context, theme, schedule, offsetSecond, pxPerSecond);
       drawPoint(context, pxPerSecond, schedule, offsetSecond, theme);
+      if (mouseHoveringPoint) {
+        drawTooltip(
+          context,
+          theme,
+          mouseHoveringPoint,
+          offsetSecond,
+          pxPerSecond
+        );
+      }
 
       renderRequestAnimationFrameId.current =
         requestAnimationFrame(renderGraph);
@@ -59,17 +69,17 @@ export default function Graph(props: Props) {
         cancelAnimationFrame(renderRequestAnimationFrameId.current);
       }
     };
-  }, [offsetSecond, pxPerSecond, theme, schedule]);
+  }, [offsetSecond, pxPerSecond, theme, schedule, mouseHoveringPoint]);
 
   const cursor = useMemo(() => {
     if (isDraggingBackground) {
       return "grabbing";
-    } else if (mouseHoveringPointId) {
+    } else if (mouseHoveringPoint) {
       return "pointer";
     } else {
       return "crosshair";
     }
-  }, [isDraggingBackground, mouseHoveringPointId]);
+  }, [isDraggingBackground, mouseHoveringPoint]);
 
   return (
     <Canvas
@@ -101,12 +111,12 @@ export default function Graph(props: Props) {
           );
           const mouseX = event.nativeEvent.offsetX;
           const mouseY = event.nativeEvent.offsetY;
-          const clickedPoint = onscreenPoints.find((point) => {
+          const hoveringPoint = onscreenPoints.find((point) => {
             const x = (point.offsetSecond - offsetSecond) * pxPerSecond;
             const y = height - point.volume * height;
             return (mouseX - x) ** 2 + (mouseY - y) ** 2 < POINT_RADIUS ** 2;
           });
-          setMouseHoveringPointId(clickedPoint?.id);
+          setMouseHoveringPoint(hoveringPoint);
         }
       }}
       onWheel={(event) => {
@@ -126,7 +136,7 @@ export default function Graph(props: Props) {
         }
       }}
       onClick={(event) => {
-        if (canvasRef.current) {
+        if (!mouseHoveringPoint && canvasRef.current) {
           const newVolumePoint = {
             id: nanoid(),
             offsetSecond:
@@ -146,12 +156,12 @@ export default function Graph(props: Props) {
       }}
       onContextMenu={(event) => {
         event.preventDefault();
-        if (mouseHoveringPointId) {
+        if (mouseHoveringPoint) {
           setSchedule((prev) => {
             return {
               id: prev.id,
               volumePoints: prev.volumePoints.filter(
-                (point) => point.id !== mouseHoveringPointId
+                (point) => point.id !== mouseHoveringPoint.id
               ),
             };
           });
@@ -168,6 +178,54 @@ const Canvas = styled.canvas<{ cursor: string }>`
   height: 100%;
   cursor: ${({ cursor }) => cursor};
 `;
+
+function drawTooltip(
+  context: CanvasRenderingContext2D,
+  theme: DefaultTheme,
+  mouseHoveringPoint: VolumePoint,
+  offsetSecond: number,
+  pxPerSecond: number
+) {
+  const padding = 4;
+  context.save();
+  context.font = "12px sans-serif";
+  context.fillStyle = theme.color.primary.main;
+  context.strokeStyle = theme.color.primary.contrastText;
+  context.lineWidth = 2;
+  context.textBaseline = "top";
+  const timeText = `+${secondToTimestamp(mouseHoveringPoint.offsetSecond)}`;
+  const volumeText = `${(mouseHoveringPoint.volume * 100).toFixed(1)}%`;
+  const timeTextMetric = context.measureText(timeText);
+  const VolumeTextMetric = context.measureText(volumeText);
+  const timeTextHeight =
+    timeTextMetric.actualBoundingBoxAscent +
+    timeTextMetric.actualBoundingBoxDescent;
+  const volumeTextHeight =
+    VolumeTextMetric.actualBoundingBoxAscent +
+    VolumeTextMetric.actualBoundingBoxDescent;
+  const totalWidth =
+    Math.max(timeTextMetric.width, VolumeTextMetric.width) + padding * 2;
+  const totalHeight = timeTextHeight + volumeTextHeight + padding * 3;
+  const maxX = context.canvas.width - totalWidth;
+  const maxY = context.canvas.height - totalHeight;
+  const x = Math.min(
+    maxX,
+    (mouseHoveringPoint.offsetSecond - offsetSecond) * pxPerSecond
+  );
+  const y = Math.min(
+    maxY,
+    context.canvas.height -
+      mouseHoveringPoint.volume * context.canvas.height -
+      totalHeight
+  );
+  context.translate(x, y);
+  context.fillRect(0, 0, totalWidth, totalHeight);
+  context.strokeRect(0, 0, totalWidth, totalHeight);
+  context.fillStyle = theme.color.primary.contrastText;
+  context.fillText(timeText, padding, padding);
+  context.fillText(volumeText, padding, timeTextHeight + padding * 2);
+  context.restore();
+}
 
 function drawPoint(
   context: CanvasRenderingContext2D,
