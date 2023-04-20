@@ -36,7 +36,6 @@ export namespace ScheduleState {
       ({ onSet }) => {
         onSet((newValue, _, isReset) => {
           const key = `ScheduleState.schedule-${newValue.id}`;
-          console.log(isReset, newValue);
           if (isReset) {
             localStorage.removeItem(key);
           } else {
