@@ -251,15 +251,21 @@ function drawTooltip(
   const totalHeight = timeTextHeight + volumeTextHeight + padding * 3;
   const maxX = context.canvas.width - totalWidth;
   const maxY = context.canvas.height - totalHeight;
-  const x = Math.min(
-    maxX,
-    (mouseHoveringPoint.offsetSecond - offsetSecond) * pxPerSecond
+  const x = Math.max(
+    0,
+    Math.min(
+      maxX,
+      (mouseHoveringPoint.offsetSecond - offsetSecond) * pxPerSecond
+    )
   );
-  const y = Math.min(
-    maxY,
-    context.canvas.height -
-      mouseHoveringPoint.volume * context.canvas.height -
-      totalHeight
+  const y = Math.max(
+    0,
+    Math.min(
+      maxY,
+      context.canvas.height -
+        mouseHoveringPoint.volume * context.canvas.height -
+        totalHeight
+    )
   );
   context.translate(x, y);
   context.fillRect(0, 0, totalWidth, totalHeight);
