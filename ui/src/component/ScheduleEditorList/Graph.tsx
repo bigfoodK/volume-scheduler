@@ -19,6 +19,7 @@ export default function Graph(props: Props) {
   const [pxPerSecond, setPxPerSecond] = useState(0.1);
   const [offsetSecond, setOffsetSecond] = useState(0);
   const [isDraggingBackground, setIsDraggingBackground] = useState(false);
+  const [draggingPoint, setDraggingPoint] = useState<VolumePoint | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderRequestAnimationFrameId = useRef<number | null>();
   const [schedule, setSchedule] = useRecoilState(
@@ -75,7 +76,7 @@ export default function Graph(props: Props) {
     if (isDraggingBackground) {
       return "grabbing";
     } else if (mouseHoveringPoint) {
-      return "pointer";
+      return "move";
     } else {
       return "crosshair";
     }
@@ -89,15 +90,70 @@ export default function Graph(props: Props) {
         if (event.button === 1) {
           setIsDraggingBackground(true);
         }
+        if (event.button === 0 && mouseHoveringPoint) {
+          setDraggingPoint(mouseHoveringPoint);
+        }
       }}
       onMouseUp={(event) => {
-        setIsDraggingBackground(false);
+        if (
+          !mouseHoveringPoint &&
+          !draggingPoint &&
+          event.button === 0 &&
+          canvasRef.current
+        ) {
+          const newVolumePoint = {
+            id: nanoid(),
+            offsetSecond:
+              event.nativeEvent.offsetX / pxPerSecond + offsetSecond,
+            volume: 1 - event.nativeEvent.offsetY / canvasRef.current.height,
+          };
+          setSchedule((prev) => {
+            const volumePoints = [...prev.volumePoints, newVolumePoint].sort(
+              (a, b) => a.offsetSecond - b.offsetSecond
+            );
+            return {
+              id: prev.id,
+              volumePoints,
+            };
+          });
+        }
+        if (event.button === 1) {
+          setIsDraggingBackground(false);
+        }
+        if (event.button === 0) {
+          setDraggingPoint(null);
+        }
       }}
       onMouseMove={(event) => {
         if (isDraggingBackground) {
           setOffsetSecond((prev) =>
             Math.max(prev - event.movementX / pxPerSecond, 0)
           );
+        }
+
+        if (draggingPoint && canvasRef.current) {
+          const nextVolume =
+            (canvasRef.current.height - event.nativeEvent.offsetY) /
+            canvasRef.current.height;
+          const nextOffsetSecond =
+            event.nativeEvent.offsetX / pxPerSecond + offsetSecond;
+          const newVolumePoint = {
+            id: draggingPoint.id,
+            offsetSecond: Math.max(0, nextOffsetSecond),
+            volume: Math.max(0, Math.min(1, nextVolume)),
+          } as VolumePoint;
+          setSchedule((prev) => {
+            const volumePoints = [
+              ...prev.volumePoints.filter(
+                (point) => point.id !== draggingPoint.id
+              ),
+              newVolumePoint,
+            ].sort((a, b) => a.offsetSecond - b.offsetSecond);
+            return {
+              id: prev.id,
+              volumePoints,
+            };
+          });
         }
 
         if (canvasRef.current) {
@@ -133,25 +189,6 @@ export default function Graph(props: Props) {
           setOffsetSecond((prev) =>
             Math.max(prev + event.deltaY / pxPerSecond, 0)
           );
-        }
-      }}
-      onClick={(event) => {
-        if (!mouseHoveringPoint && canvasRef.current) {
-          const newVolumePoint = {
-            id: nanoid(),
-            offsetSecond:
-              event.nativeEvent.offsetX / pxPerSecond + offsetSecond,
-            volume: 1 - event.nativeEvent.offsetY / canvasRef.current.height,
-          };
-          setSchedule((prev) => {
-            const volumePoints = [...prev.volumePoints, newVolumePoint].sort(
-              (a, b) => a.offsetSecond - b.offsetSecond
-            );
-            return {
-              id: prev.id,
-              volumePoints,
-            };
-          });
         }
       }}
       onContextMenu={(event) => {
