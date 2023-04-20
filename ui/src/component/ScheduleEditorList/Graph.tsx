@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRecoilState } from "recoil";
 import styled, { DefaultTheme, useTheme } from "styled-components";
 import { Schedule } from "~../app/bindings/Schedule";
@@ -61,11 +61,24 @@ export default function Graph(props: Props) {
     };
   }, [offsetSecond, pxPerSecond, theme, schedule]);
 
+  const cursor = useMemo(() => {
+    if (isDraggingBackground) {
+      return "grabbing";
+    } else if (mouseHoveringPointId) {
+      return "pointer";
+    } else {
+      return "crosshair";
+    }
+  }, [isDraggingBackground, mouseHoveringPointId]);
+
   return (
     <Canvas
+      cursor={cursor}
       ref={canvasRef}
       onMouseDown={(event) => {
-        setIsDraggingBackground(true);
+        if (event.button === 1) {
+          setIsDraggingBackground(true);
+        }
       }}
       onMouseUp={(event) => {
         setIsDraggingBackground(false);
@@ -75,6 +88,25 @@ export default function Graph(props: Props) {
           setOffsetSecond((prev) =>
             Math.max(prev - event.movementX / pxPerSecond, 0)
           );
+        }
+
+        if (canvasRef.current) {
+          const width = canvasRef.current.width;
+          const height = canvasRef.current.height;
+          const maxOffsetSecond = width / pxPerSecond + offsetSecond;
+          const onscreenPoints = getOnscreenPoints(
+            schedule,
+            offsetSecond,
+            maxOffsetSecond
+          );
+          const mouseX = event.nativeEvent.offsetX;
+          const mouseY = event.nativeEvent.offsetY;
+          const clickedPoint = onscreenPoints.find((point) => {
+            const x = (point.offsetSecond - offsetSecond) * pxPerSecond;
+            const y = height - point.volume * height;
+            return (mouseX - x) ** 2 + (mouseY - y) ** 2 < POINT_RADIUS ** 2;
+          });
+          setMouseHoveringPointId(clickedPoint?.id);
         }
       }}
       onWheel={(event) => {
@@ -87,9 +119,14 @@ export default function Graph(props: Props) {
             return next;
           });
         }
+        if (event.shiftKey) {
+          setOffsetSecond((prev) =>
+            Math.max(prev + event.deltaY / pxPerSecond, 0)
+          );
+        }
       }}
       onClick={(event) => {
-        if (event.ctrlKey && canvasRef.current) {
+        if (canvasRef.current) {
           const newVolumePoint = {
             id: nanoid(),
             offsetSecond:
@@ -109,30 +146,12 @@ export default function Graph(props: Props) {
       }}
       onContextMenu={(event) => {
         event.preventDefault();
-        if (!canvasRef.current) {
-          return;
-        }
-        const width = canvasRef.current.width;
-        const height = canvasRef.current.height;
-        const maxOffsetSecond = width / pxPerSecond + offsetSecond;
-        const onscreenPoints = getOnscreenPoints(
-          schedule,
-          offsetSecond,
-          maxOffsetSecond
-        );
-        const mouseX = event.nativeEvent.offsetX;
-        const mouseY = event.nativeEvent.offsetY;
-        const clickedPoint = onscreenPoints.find((point) => {
-          const x = (point.offsetSecond - offsetSecond) * pxPerSecond;
-          const y = height - point.volume * height;
-          return (mouseX - x) ** 2 + (mouseY - y) ** 2 < POINT_RADIUS ** 2;
-        });
-        if (clickedPoint) {
+        if (mouseHoveringPointId) {
           setSchedule((prev) => {
             return {
               id: prev.id,
               volumePoints: prev.volumePoints.filter(
-                (point) => point.id !== clickedPoint.id
+                (point) => point.id !== mouseHoveringPointId
               ),
             };
           });
@@ -142,11 +161,12 @@ export default function Graph(props: Props) {
   );
 }
 
-const Canvas = styled.canvas`
+const Canvas = styled.canvas<{ cursor: string }>`
   position: relative;
   grid-area: graph;
   width: 100%;
   height: 100%;
+  cursor: ${({ cursor }) => cursor};
 `;
 
 function drawPoint(
